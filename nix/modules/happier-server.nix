@@ -168,6 +168,10 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        # Share the same user and state directory as happier-server
+        # so migrations write to the same database the server reads
+        DynamicUser = true;
+        StateDirectory = "happier-server";
       }
       // (
         if isFullMode then
@@ -176,6 +180,7 @@ in
             Environment = [
               "DATABASE_URL=postgresql://${cfg.database.user}@localhost/${cfg.database.name}"
               "NODE_ENV=production"
+              "HOME=%S/happier-server"
             ];
           }
         else
@@ -183,6 +188,7 @@ in
             ExecStart = "${cfg.package}/bin/happier-server-migrate-light";
             Environment = [
               "NODE_ENV=production"
+              "HOME=%S/happier-server"
             ];
           }
       );
