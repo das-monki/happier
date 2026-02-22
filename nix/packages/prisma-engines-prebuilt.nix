@@ -17,7 +17,9 @@ let
   yarnLockContent = builtins.readFile yarnLock;
   lines = builtins.filter builtins.isString (builtins.split "\n" yarnLockContent);
 
-  engineVersionLines = builtins.filter (l: builtins.match ".*@prisma/engines-version.*" l != null) lines;
+  engineVersionLines = builtins.filter (
+    l: builtins.match ".*@prisma/engines-version.*" l != null
+  ) lines;
   engineHash = builtins.elemAt (builtins.match ".*\\.([a-f0-9]+).*" (builtins.head engineVersionLines)) 0;
 
   prismaVersionLines = builtins.filter (l: builtins.match "\"@prisma/engines@.*" l != null) lines;
@@ -51,7 +53,9 @@ let
     };
   };
 
-  cfg = platformConfig.${pkgs.system} or (throw "prisma-engines-prebuilt: unsupported system ${pkgs.system}");
+  cfg =
+    platformConfig.${pkgs.system}
+      or (throw "prisma-engines-prebuilt: unsupported system ${pkgs.system}");
 
   queryEngineSrc = pkgs.fetchurl {
     url = "${baseUrl}/${cfg.platform}/${cfg.queryEngineFile}";
