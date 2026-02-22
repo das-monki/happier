@@ -233,6 +233,7 @@ in
         Environment = [
           "NODE_ENV=production"
           "PORT=${toString cfg.port}"
+          "HOME=%S/happier-server"
         ]
         ++ lib.optionals isFullMode (
           [
