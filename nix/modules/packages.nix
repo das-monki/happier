@@ -344,7 +344,12 @@
               --set PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING "1" \
               --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.openssl ]}" \
               --chdir "$out/lib/happier-server/apps/server" \
-              --prefix PATH : ${lib.makeBinPath [ pkgs.nodejs_22 ]}
+              --prefix PATH : ${
+                lib.makeBinPath [
+                  pkgs.nodejs_22
+                  pkgs.yarn
+                ]
+              }
 
             # Light migration binary (SQLite deploy script)
             makeWrapper ${pkgs.nodejs_22}/bin/node $out/bin/happier-server-migrate-light \
@@ -356,7 +361,12 @@
               --set PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING "1" \
               --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ pkgs.openssl ]}" \
               --chdir "$out/lib/happier-server/apps/server" \
-              --prefix PATH : ${lib.makeBinPath [ pkgs.nodejs_22 ]}
+              --prefix PATH : ${
+                lib.makeBinPath [
+                  pkgs.nodejs_22
+                  pkgs.yarn
+                ]
+              }
 
             runHook postInstall
           '';
