@@ -73,14 +73,24 @@ pkgs.stdenv.mkDerivation {
 
   dontUnpack = true;
 
-  nativeBuildInputs = [ pkgs.gzip ];
+  nativeBuildInputs = [
+    pkgs.gzip
+    pkgs.autoPatchelfHook
+  ];
+
+  # Runtime libraries needed by the prebuilt binaries
+  buildInputs = [
+    pkgs.openssl
+    pkgs.stdenv.cc.cc.lib # libstdc++/libgcc
+    pkgs.zlib
+  ];
 
   installPhase = ''
     mkdir -p $out/lib $out/bin
 
     # Query engine (shared library loaded by @prisma/client)
     gzip -dc ${queryEngineSrc} > $out/lib/libquery_engine.node
-    chmod 644 $out/lib/libquery_engine.node
+    chmod 755 $out/lib/libquery_engine.node
 
     # Schema engine (binary used by prisma migrate)
     gzip -dc ${schemaEngineSrc} > $out/bin/schema-engine
