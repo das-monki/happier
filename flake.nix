@@ -42,23 +42,14 @@
           _module.args.pkgs = import self.inputs.nixpkgs {
             inherit system;
             overlays = [
-              # Pin prisma-engines to match the project's @prisma/client version (6.19.2)
+              # Prebuilt Prisma engines — version auto-derived from yarn.lock.
+              # When @prisma/client is bumped, run: ./nix/scripts/update-prisma-hashes.sh
               (final: prev: {
-                prisma-engines = prev.prisma-engines.overrideAttrs (old: rec {
-                  version = "6.19.2";
-                  src = final.fetchFromGitHub {
-                    owner = "prisma";
-                    repo = "prisma-engines";
-                    rev = version;
-                    hash = "sha256-z3GdnrLEMJIGPKXXbz2wrbiGpuNlgYxqg3iYINYTnPI=";
-                  };
-                  cargoDeps = final.rustPlatform.fetchCargoVendor {
-                    inherit src;
-                    pname = "prisma-engines";
-                    inherit version;
-                    hash = "sha256-PgCfBcmK9RCA5BMacJ5oYEpo2DnBKx2xPbdLb79yCCY=";
-                  };
-                });
+                prisma-engines = import ./nix/packages/prisma-engines-prebuilt.nix {
+                  pkgs = final;
+                  lib = final.lib;
+                  yarnLock = ./yarn.lock;
+                };
               })
             ];
           };
