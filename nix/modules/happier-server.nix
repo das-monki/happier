@@ -194,6 +194,30 @@ in
       );
     };
 
+    # Enable WAL mode on the SQLite database (light mode only).
+    # WAL allows concurrent readers + one writer, eliminating the lock contention
+    # that causes "Socket timeout" and "Transaction already closed" Prisma errors.
+    systemd.services.happier-server-sqlite-wal = lib.mkIf (!isFullMode) {
+      description = "Enable WAL mode on happier-server SQLite database";
+      wantedBy = [ "happier-server.service" ];
+      before = [ "happier-server.service" ];
+      after = [ "happier-server-migrate.service" ];
+      requires = [ "happier-server-migrate.service" ];
+      path = [ pkgs.sqlite ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        DynamicUser = true;
+        StateDirectory = "happier-server";
+      };
+      script = ''
+        DB="%S/happier-server/.happy/server-light/happier-server-light.sqlite"
+        if [ -f "$DB" ]; then
+          sqlite3 "$DB" "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;"
+        fi
+      '';
+    };
+
     # Main happier-server service
     systemd.services.happier-server = {
       description = "Happier Server";
@@ -202,6 +226,7 @@ in
         "network.target"
         "happier-server-migrate.service"
       ]
+      ++ lib.optional (!isFullMode) "happier-server-sqlite-wal.service"
       ++ lib.optionals isFullMode (
         lib.optional cfg.database.createLocally "postgresql.service"
         ++ lib.optional cfg.redis.createLocally "redis-happier.service"
@@ -210,6 +235,7 @@ in
       requires = [
         "happier-server-migrate.service"
       ]
+      ++ lib.optional (!isFullMode) "happier-server-sqlite-wal.service"
       ++ lib.optionals isFullMode (
         lib.optional cfg.database.createLocally "postgresql.service"
         ++ lib.optional cfg.redis.createLocally "redis-happier.service"
