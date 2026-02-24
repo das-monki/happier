@@ -14,7 +14,7 @@ REPO_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 NIX_FILE="$SCRIPT_DIR/../packages/prisma-engines-prebuilt.nix"
 
 # Extract engine hash from yarn.lock
-ENGINE_HASH=$(grep '@prisma/engines-version' "$REPO_ROOT/yarn.lock" | head -1 | grep -oP '[a-f0-9]{40}')
+ENGINE_HASH=$(grep '@prisma/engines-version' "$REPO_ROOT/yarn.lock" | head -1 | grep -oE '[a-f0-9]{40}')
 
 if [ -z "$ENGINE_HASH" ]; then
   echo "ERROR: Could not find @prisma/engines-version in yarn.lock"
@@ -35,7 +35,9 @@ update_hash() {
   local old_hash="$1"
   local new_hash="$2"
   if [ "$old_hash" != "$new_hash" ]; then
-    sed -i '' "s|$old_hash|$new_hash|g" "$NIX_FILE"
+    tmp="$(mktemp)"
+    sed "s|$old_hash|$new_hash|g" "$NIX_FILE" > "$tmp"
+    mv "$tmp" "$NIX_FILE"
     echo "  Updated: $old_hash -> $new_hash"
   else
     echo "  Unchanged: $old_hash"
@@ -59,7 +61,7 @@ echo ""
 echo "Updating hashes in $NIX_FILE..."
 
 # Read current hashes from the nix file (in order of appearance)
-CURRENT_HASHES=($(grep -oP '(?<=Hash = ")[^"]+' "$NIX_FILE"))
+CURRENT_HASHES=($(grep -oE 'Hash = "[^"]+"' "$NIX_FILE" | sed 's/.*Hash = "//;s/"//'))
 
 # Update in order: aarch64-linux QE, SE, aarch64-darwin QE, SE, x86_64-linux QE, SE
 NEW_HASHES=("$AARCH64_LINUX_QE" "$AARCH64_LINUX_SE" "$AARCH64_DARWIN_QE" "$AARCH64_DARWIN_SE" "$X86_64_LINUX_QE" "$X86_64_LINUX_SE")
